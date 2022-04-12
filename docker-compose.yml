@@ -1,0 +1,31 @@
+version: "3"
+
+services: 
+  valheim: 
+    depends_on:
+      - tailscaled
+    image: ghcr.io/lloesche/valheim-server
+    cap_add:
+      - sys_nice
+    volumes: 
+      - $HOME/valheim-server/config:/config
+      - $HOME/valheim-server/data:/opt/valheim
+    env_file:
+      - $HOME/valheim-server/valheim.env
+    restart: always
+    stop_grace_period: 2m
+    network_mode: service:tailscaled
+  tailscaled:
+    hostname: valheim-server
+    image: tailscale/tailscale
+    volumes:
+      - "/tmp/var/lib:/var/lib"        # State data will be stored in this directory
+      - "/lib/modules:/lib/modules"
+      - "./connect.sh:/connect.sh"
+    cap_add:                                    
+      - net_admin
+      - sys_module
+    privileged: true
+    env_file:
+      - $HOME/valheim-server/tailscale.env
+    command: ash /connect.sh
